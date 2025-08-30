@@ -5,17 +5,22 @@ from prophet import Prophet
 import plotly.graph_objs as go
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import numpy as np
-import time
 
 st.set_page_config(layout="wide")
 st.title("📈 Real-Time Stock Prediction Dashboard")
+
+# --- Auto-refresh page in browser every 5 minutes ---
+st.markdown(
+    '<meta http-equiv="refresh" content="300">',
+    unsafe_allow_html=True
+)
 
 # Sidebar widgets
 stock = st.sidebar.selectbox("Select a Stock", ["TSLA", "AAPL", "GOOG", "AMZN", "MSFT"])
 interval = st.sidebar.selectbox("Select Interval", ["1m", "5m", "15m", "1h", "1d"])
 period = st.sidebar.selectbox("Select Period", ["1d", "5d", "1mo", "3mo", "6mo"])
 
-# --- Load stock data with caching (refresh every 5 min) ---
+# --- Load stock data with caching (5-minute TTL) ---
 @st.cache_data(ttl=300)
 def load_data(ticker, period, interval):
     df = yf.download(ticker, period=period, interval=interval)
@@ -105,11 +110,3 @@ else:
     st.info("Not enough data to evaluate accuracy.")
 
 st.info("⚠️ Dashboard retrains every 5 minutes automatically.")
-
-# --- Auto-retrain logic ---
-st_autorefresh_interval = 300  # 5 minutes
-st.session_state.setdefault("last_rerun", time.time())
-
-if time.time() - st.session_state["last_rerun"] > st_autorefresh_interval:
-    st.session_state["last_rerun"] = time.time()
-    st.experimental_rerun()
